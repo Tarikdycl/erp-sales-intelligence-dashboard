@@ -337,7 +337,7 @@ A production version would require:
 
 ### 1. Clone the repository
 
-`git clone https://github.com/YOUR_USERNAME/erp-sales-intelligence-dashboard.git`
+`git clone https://github.com/Tarikdycl/erp-sales-intelligence-dashboard.git`
 
 `cd erp-sales-intelligence-dashboard`
 
