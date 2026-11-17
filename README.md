@@ -1,6 +1,6 @@
 # 📊 ERP Sales Intelligence Dashboard
 
-An AI/ML-powered business intelligence dashboard that transforms raw retail transaction data into **sales forecasts**, **customer segments**, and **automated business recommendations**.
+An machine-learning business analytics prototype that transforms raw retail transaction data into **sales forecasts**, **customer segments**, and **transparent, evidence-linked decision rules**.
 
 ## 🖼️ Project Preview
 
@@ -19,7 +19,7 @@ The dashboard turns sales data into:
 - Monthly revenue forecasts
 - Customer behavior segments
 - Product and country revenue insights
-- AI-style business recommendations
+- rule-based insights with explicit evidence
 - An interactive Streamlit dashboard
 
 ## 📦 Dataset
@@ -196,7 +196,7 @@ Model results:
 | Model | MAE |
 |---|---:|
 | Linear Regression | ~$52,640 |
-| Random Forest Regressor | ~$272,267 |
+| Random Forest Regressor | ~$266,094 |
 
 Final forecasting result:
 
@@ -205,7 +205,7 @@ Final forecasting result:
 | Best model | Linear Regression |
 | Predicted next-month revenue | ~$1.09M |
 
-Linear Regression performed better than Random Forest in this project. This happened because the dataset only had a small number of usable monthly rows after feature engineering. With limited historical time-series data, a simpler model can generalize better than a more complex model.
+Linear Regression had lower observed holdout MAE than the baseline Random Forest in this run. The dataset contains only ten monthly feature rows, so the model comparison is preliminary. Several features use same-month values that would not be available before the month is complete; the experiment is not a validated next-month forecast.
 
 ### 5. Customer Segmentation
 
@@ -248,7 +248,7 @@ The dashboard includes:
 - Top products by revenue
 - Forecasting model results
 - Customer segmentation results
-- AI-style business summary
+- deterministic business summary
 - Business recommendations
 
 ## 🔍 Key Findings
@@ -305,9 +305,10 @@ This project is a prototype and has several important limitations:
 
 - The dataset contains roughly one year of sales data
 - The forecasting model has only a small number of monthly rows to learn from
-- The model predicts total monthly revenue, not product-level demand
+- Some forecasting inputs use same-month sales quantities, orders, and average order value; these would be unavailable at the true forecast date, so forward-looking performance is not established
+- The experimental model targets total monthly revenue, not product-level demand
 - The dashboard uses static processed CSV files instead of a live database
-- The AI-style report is rule-based, not connected to an LLM yet
+- The business insights are deterministic, non-LLM decision rules; they are hypotheses rather than proven actions
 - The customer segments depend on the selected number of K-Means clusters
 - The model does not include external factors such as holidays, promotions, marketing spend, or economic conditions
 
@@ -395,4 +396,4 @@ This project helped me practice:
 
 ## 📌 Resume Summary
 
-Built an ERP-style sales intelligence dashboard using Python, Pandas, Scikit-learn, Streamlit, and Plotly. Engineered monthly sales and customer RFM features, trained forecasting models, segmented 4,338 customers with K-Means clustering, and generated automated business recommendations.
+Built an ERP-style sales intelligence dashboard using Python, Pandas, Scikit-learn, Streamlit, and Plotly. Engineered monthly sales and customer RFM features, trained forecasting models, segmented 4,338 customers with K-Means clustering, and generated transparent, evidence-linked decision rules.
