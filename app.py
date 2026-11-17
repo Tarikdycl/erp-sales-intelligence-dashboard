@@ -139,7 +139,7 @@ st.markdown(
     <div class="hero-card">
         <h1>ERP Sales Intelligence Dashboard</h1>
         <p class="hero-subtitle">
-            An AI/ML-powered business intelligence prototype that turns raw transaction data
+            A machine-learning business analytics prototype that turns raw transaction data
             into revenue forecasts, customer segments, and automated business recommendations.
         </p>
     </div>
@@ -182,7 +182,7 @@ tab1, tab2, tab3, tab4 = st.tabs(
         "Overview",
         "Sales Forecast",
         "Customer Segments",
-        "AI Business Report",
+        "Business Insights & Rules",
     ]
 )
 
@@ -313,11 +313,14 @@ with tab2:
     )
     st.plotly_chart(forecast_fig, use_container_width=True)
 
-    st.info(
-        "Note: This dataset contains roughly one year of sales data. "
-        "The forecasting model is a prototype demonstration of an ML pipeline, "
-        "not a production-grade forecast."
-    )
+    with st.expander("Forecast methodology and limitations"):
+        st.write(
+            "The model was evaluated on only ten monthly feature rows. "
+            "Some inputs (such as same-month orders and average order value) are not "
+            "known at the time a genuine next-month forecast would be made. "
+            "The displayed figure is therefore a pipeline demonstration, not a "
+            "validated forward-looking business forecast."
+        )
 
     st.markdown(
         f"""
@@ -385,99 +388,134 @@ with tab3:
 
     st.dataframe(segment_summary_display, use_container_width=True)
 
-    st.markdown(
-        """
-        <div class="section-card">
-            <h3>Segment interpretation</h3>
-            <p class="small-muted">
-                <strong>High-Value Loyal Customers:</strong> small group, very frequent, very high revenue.<br>
-                <strong>Recent Active Customers:</strong> currently engaged customers with recent purchases.<br>
-                <strong>Occasional Low-Value Customers:</strong> lower purchase frequency and lower spending.<br>
-                <strong>At-Risk Valuable Customers:</strong> valuable customers who have not purchased recently.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    st.subheader("How to read these segments")
+    st.caption(
+        "K-Means groups customers using standardized purchasing features. "
+        "The four business labels are assigned after clustering using summary statistics; "
+        "they are interpretations, not verified churn or loyalty predictions."
     )
+    segment_explanations = {
+        "High-Value Loyal Customers": "Higher historical purchase frequency and spending, with recent purchases.",
+        "Recent Active Customers": "Relatively recent purchasers with more typical spending patterns.",
+        "Occasional Low-Value Customers": "Lower frequency and historical spending within this dataset.",
+        "At-Risk Valuable Customers": "High historical value but longer time since the last purchase; not a validated churn prediction.",
+    }
+    for _, segment_row in segment_summary.iterrows():
+        st.markdown(f"**{segment_row['segment']}**")
+        st.write(
+            f"{segment_explanations.get(segment_row['segment'], 'Inspect this group using its summary statistics.')} "
+            f"**{int(segment_row['customers']):,} customers**, "
+            f"**${segment_row['total_revenue']:,.0f}** historical revenue, "
+            f"average recency **{segment_row['avg_recency']:.0f} days**."
+        )
 
 
 # -----------------------------
-# Tab 4: AI Business Report
+# Tab 4: Business Insights & Rules
 # -----------------------------
 with tab4:
-    st.subheader("AI-Style Business Report")
+    st.subheader("Business Insights & Decision Rules")
+    st.caption(
+        "Transparent, deterministic analytics based on historical transactions and K-Means segments. "
+        "No language model or generative AI is used in this report."
+    )
 
     latest_revenue = monthly["revenue"].iloc[-1]
     previous_revenue = monthly["revenue"].iloc[-2]
-    growth_rate = ((latest_revenue - previous_revenue) / previous_revenue) * 100
-
-    top_product = (
-        sales.groupby("description")["revenue"]
-        .sum()
-        .sort_values(ascending=False)
-        .index[0]
+    growth_rate = (
+        (latest_revenue - previous_revenue) / previous_revenue * 100
+        if previous_revenue != 0
+        else None
     )
 
-    top_country = (
-        sales.groupby("country")["revenue"]
-        .sum()
-        .sort_values(ascending=False)
-        .index[0]
+    top_product_revenue = (
+        sales.groupby("description")["revenue"].sum().sort_values(ascending=False)
     )
+    top_country_revenue = (
+        sales.groupby("country")["revenue"].sum().sort_values(ascending=False)
+    )
+    top_product = top_product_revenue.index[0]
+    top_country = top_country_revenue.index[0]
+    top_product_amount = top_product_revenue.iloc[0]
+    top_country_amount = top_country_revenue.iloc[0]
 
-    highest_value_segment = segment_summary.iloc[0]["segment"]
-
-    if growth_rate > 0:
-        trend_sentence = (
-            f"Revenue increased by {growth_rate:.2f}% compared to the previous month."
-        )
+    if growth_rate is not None:
+        st.metric("Latest complete month vs prior month", f"{growth_rate:+.1f}%")
     else:
-        trend_sentence = (
-            f"Revenue decreased by {abs(growth_rate):.2f}% compared to the previous month."
+        st.write("Month-over-month change is unavailable because the prior month's revenue is zero.")
+
+    c1, c2 = st.columns(2)
+    c1.metric("Top product by historical revenue", f"${top_product_amount:,.0f}")
+    c1.caption(top_product)
+    c2.metric("Top country by historical revenue", f"${top_country_amount:,.0f}")
+    c2.caption(top_country)
+
+    st.markdown("#### Evidence-linked action ideas")
+    st.caption(
+        "These are illustrative business rules derived from the displayed data, "
+        "not tested recommendations or causal claims."
+    )
+
+    high_value = segment_summary.loc[
+        segment_summary["segment"] == "High-Value Loyal Customers"
+    ]
+    if not high_value.empty:
+        group = high_value.iloc[0]
+        st.markdown("**Consider a high-value customer outreach review**")
+        st.write(
+            f"Evidence: {int(group['customers']):,} customers account for "
+            f"${group['total_revenue']:,.0f} of historical revenue. "
+            "Possible action: review VIP service or retention outreach; test impact before scaling."
         )
 
-    st.markdown(
-        f"""
-        <div class="section-card">
-            <h3>Monthly Business Summary</h3>
-            <p class="small-muted">
-                {trend_sentence}
-                <br><br>
-                The top-selling product by revenue is <strong>{top_product}</strong>.
-                <br><br>
-                The strongest market by revenue is <strong>{top_country}</strong>.
-                <br><br>
-                The highest revenue customer segment is <strong>{highest_value_segment}</strong>.
-                <br><br>
-                The forecasting model predicts next-month revenue of approximately
-                <strong>${predicted_revenue:,.2f}</strong>.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    at_risk = segment_summary.loc[
+        segment_summary["segment"] == "At-Risk Valuable Customers"
+    ]
+    if not at_risk.empty:
+        group = at_risk.iloc[0]
+        st.markdown("**Review historically valuable but less recent customers**")
+        st.write(
+            f"Evidence: {int(group['customers']):,} customers, "
+            f"${group['total_revenue']:,.0f} historical revenue, "
+            f"average recency {group['avg_recency']:.0f} days. "
+            "Possible action: investigate whether outreach is warranted. "
+            "This segment does not establish churn probability."
+        )
+
+    st.markdown("**Investigate the highest-revenue product**")
+    st.write(
+        f"Evidence: {top_product} generated ${top_product_amount:,.0f} in historical sales. "
+        "Possible action: inspect its demand and inventory history; revenue rank alone "
+        "does not predict future demand."
     )
 
-    st.markdown(
-        """
-        <div class="section-card">
-            <h3>Recommended Actions</h3>
-            <p class="small-muted">
-                1. Protect high-value loyal customers with VIP offers or personalized outreach.<br>
-                2. Re-engage at-risk valuable customers before they churn.<br>
-                3. Prepare inventory around top-selling products before peak demand.<br>
-                4. Monitor monthly revenue trends because the model is trained on limited historical data.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    st.markdown("**Validate forecasting before operational use**")
+    st.write(
+        f"Evidence: the selected model's holdout MAE is ${forecast['model_mae'].iloc[0]:,.0f}. "
+        "Only ten monthly feature rows are available, and some same-month inputs "
+        "would not be known in advance. Use a true forward-looking feature set "
+        "and more out-of-time tests before treating the forecast as actionable."
     )
+
+    with st.expander("How these rules are produced"):
+        st.markdown(
+            """
+            - **Revenue and top product/country:** sums of `revenue = quantity × unit_price`
+              from cleaned transactions.
+            - **Customer groups:** K-Means on standardized RFM and purchasing features;
+              names are assigned heuristically after clustering.
+            - **Action ideas:** fixed decision rules attached to the observed metrics above.
+              No LLM, uplift model, or automated optimization is involved.
+            - **Forecast:** experimental regression comparison, not a validated production forecast.
+            """
+        )
 
 with st.expander("Project limitations"):
     st.write(
-        """
-        This project uses approximately one year of transaction data, so the forecasting model
-        is intended as a prototype demonstration rather than a production-ready forecasting system.
-        With more historical data, the model could be improved using stronger time-series validation,
-        seasonality features, and more advanced forecasting models.
-        """
+        "This is a prototype using about one year of transactions and ten monthly "
+        "modeling rows. The forecasting pipeline uses same-month features that would "
+        "not be available at a real forecast date; it needs a properly lagged feature "
+        "set, out-of-time validation, and more history. K-Means segment names are "
+        "heuristic interpretations rather than verified customer churn labels. "
+        "Recommendations are transparent rules, not AI-generated or impact-tested."
     )
