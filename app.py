@@ -140,7 +140,7 @@ st.markdown(
         <h1>ERP Sales Intelligence Dashboard</h1>
         <p class="hero-subtitle">
             A machine-learning business analytics prototype that turns raw transaction data
-            into revenue forecasts, customer segments, and automated business recommendations.
+            into exploratory revenue estimates, customer segments, and evidence-linked decision rules.
         </p>
     </div>
     """,
@@ -156,7 +156,7 @@ col1, col2, col3, col4 = st.columns(4)
 col1.metric("Revenue Analyzed", f"${total_revenue:,.2f}")
 col2.metric("Orders Processed", f"{total_orders:,}")
 col3.metric("Customers Segmented", f"{total_customers:,}")
-col4.metric("Forecasted Revenue", f"${predicted_revenue:,.2f}")
+col4.metric("Experimental Revenue Estimate", f"${predicted_revenue:,.2f}")
 
 
 st.markdown(
